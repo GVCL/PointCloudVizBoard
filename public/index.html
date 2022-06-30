@@ -1,0 +1,783 @@
+<html>
+	<head>
+		<title>Point Cloud Analytics Board</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+		<link rel="stylesheet" href="css/styles.css">
+		<link rel="stylesheet" href="css/loader.css">
+	</head>
+	<body>
+		<a href="javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//cdn.jsdelivr.net/gh/Kevnz/stats.js/build/stats.min.js';document.head.appendChild(script);})()"></a>
+		
+		<div class="container" style="margin-left: 0%; margin-right: 0%; padding-left: 0%;">
+			<div class="row" style="height: 100%; width: 130%; margin-top:0px; margin-left:0; margin-right: 10px;">
+
+				<div class="col-xl-2" style="margin-left: 10px; padding-left: 0; padding-right: 0; padding-bottom: 10px;">
+					<div  id="mySidebar">
+						<div class="card text-white bg-secondary mb-3" style="height: 97%; margin-top:1px; margin-left:0;" >
+							<div class="card-header" style="padding-right: 5px;">
+								Controls & Selections <a href="javascript:void(0)" class="closebtn" id="closebtn" style="float: right;" onclick="closeNav()" style="right: 0%;"><img src="./images/cancel-white-24dp.svg"></a>
+							</div>
+							
+							<div style="margin-bottom: 10px; margin-left:25px; margin-top: 30px; margin-bottom: 30px;">
+								<button type="button" onClick="loadSampledData()" class="btn btn-primary"> load Point Cloud </button>
+							</div>
+
+							<div class="card w-70">
+								<div class="card-body">
+										<div class="card-title" style="color: black;">Selectors<hr/></div>
+										<input type="range" class="custom-range" min="10000" max="10000000" step="0.1" id="pointBudgetScale">
+										<p style="color: black;">Point Budget : 10000000 </p>
+										<hr/>
+										<a href="javascript:void(0)" onclick="controlEnableDisbale()"><img src="./images/aspect_ratio-black-24dp.svg" id="controlEnableDisbalebtn"></a>
+										<!--<label for="customRange3">Resize the Selection</label>-->
+										<input type="range" class="custom-range" min="0.1" max="2" step="0.1" id="cubeScale" >
+										<p style="color: black;">ROI Selector </p>
+								</div>
+							</div>
+
+							<div class="card w-70" style="margin-top: 2px; margin-right: 0;">
+								<div class="card-body">
+										<div class="card-title" style="color: black;">Analytics<hr/></div>
+										<div class="form-group form-check">
+											<input type="checkbox" class="form-check-input" id="classHistoCheck" onclick="fnClassHistoCheck()">
+											<label class="form-check-label" for="exampleCheck1" style="color: black;">Class Histogram</label>
+										</div>
+									
+										<div class="form-group form-check">
+											<input type="checkbox" class="form-check-input" id="clcscpDistCheck" onclick="fnClcscpDistCheck()">
+											<label class="form-check-label" for="exampleCheck1" style="color: black;">CL CS CP Distribution</label>
+										</div>
+
+										<div style="margin-bottom: 10px; margin-left: 5px;">
+											<button type="button" onClick="performAnalytics()" class="btn btn-primary"> Analyze </button>
+										</div>
+								</div>
+							</div>
+
+							<div class="card w-70" style="margin-top: 2px; margin-right: 0;">
+								<div class="card-body">
+										<div class="card-title" style="color: black;">Realtime Actions<hr/></div>
+										<div class="form-group form-check">
+											<input type="checkbox" class="form-check-input" id="vizSelect">
+											<label class="form-check-label" for="exampleCheck1" style="color: black;">Random Forest Classifier</label>
+										</div>
+
+										<div class="form-group form-check">
+											<input type="checkbox" class="form-check-input" id="vizSelect">
+											<label class="form-check-label" for="exampleCheck2" style="color: black;">GBT Classifier</label>
+										</div>
+										<button type="button" onClick="classifyClick()" class="btn btn-primary"> Classify </button>
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</div>
+
+				<div class="col-xl-8" id="main" class="col" style="height: 92%; margin-left:0; padding-top: 0px;">
+					    <button class="openbtn" id="openbtn" onclick="openNav()" style="margin-left: 0%; visibility: hidden; position: fixed; top: 0; left: 0;">☰</button> 
+						<div class="card-header" id ="canvasthreeheader" style="text-align: center; margin-top:0px; width:100%;">
+							Visualization
+						</div>
+						
+						<div class="text-center">
+						<div class="loader" id="canvasthreeLoader"></div>
+						</div>
+
+						<div class="text-center">
+							<div class="loader" id="classifyLoader"></div>
+						</div>
+						
+						<div class="card-body" id ="canvasthree" style="height: 100%; width:100%;border:1px solid black;"></div>
+
+				</div>
+
+				<div class="col-xl-4 sidenav" id="analyticsmain" style="height: 97%; width: max-content; margin-left:0; margin-right: 10px;">
+					<div class="loader" id="myBarChartLoader"></div>
+					<div class="row" id="vizclassHistoCheck">
+						<canvas id="myBarChart"></canvas>
+						
+					</div>
+					
+					<div class="row" id="vizclcscpDistCheck">
+						<canvas id="myChart"></canvas>
+					</div>	
+
+					<div class="row">
+						
+					</div>
+					<div class="row">
+
+					</div>
+					<div class="row">
+						<hr/>
+					</div>
+						<!--
+						<div class="row">
+						<span> Total Points : </span><span id="sTotalPoints">0</span>
+						</div>
+						
+						<div class="row">
+						<span> Total Classified : </span><span id="sClassified">0</span>
+						</div>
+
+						<div class="row">
+						<span> Total MissClassified : </span><span id="sMissClassified">0</span>
+						</div>
+						-->
+						<div class="card-header" id ="canvasthreeheader" style="text-align: center; margin-top:0px; margin-left: 0px; width:110%;">
+							ROI Visualization
+						</div>
+						<div class="row" id ="canvasthree2" style="height: 96%; width:150%; border:1px solid black;"></div>
+				</div>
+				
+
+			</div>			
+		</div>
+
+		<div class="row justify-content-center" style = "width: 100%; margin-top: 0em;">
+			<div>
+				<span>Copyright @ 2020 GVCL All Rights Reserved</span>
+			</div>
+		</div>
+		
+		<!--script section start-->
+		<script src="js/three.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/DragControls.js"></script>
+		<script src="workers/index.js"></script>
+		<script>
+			var myBarChart;
+			var myclcpchart;
+
+			var classHistoCheck = document
+				.getElementById('classHistoCheck');
+			var vizClassHistoCheck = document
+				.getElementById('vizclassHistoCheck');
+				
+			var clcscpDistCheck = document
+				.getElementById('clcscpDistCheck');	
+			var vizClcscpDistCheck = document
+				.getElementById('vizclcscpDistCheck');	
+			var canvasThree = document
+				.getElementById('canvasthree');
+			var canvasThree2 = document
+				.getElementById('canvasthree2');
+			var vertices = [];
+			var colors = [];
+			var vertices2 = [];
+			var colors2 = [];
+			var vertices3 = [];
+			var colors3 = [];
+
+			var xminSelected = 0;
+			var xmaxSelected = 0;
+			var yminSelected = 0;
+			var ymaxSelected = 0;
+			var selectedPoints = [];
+
+			var xmean = 0;
+			var ymean = 0;
+			var zmean = 0;
+			
+			var totalPoints = 3000000;
+			var totalPoints2 = 1000000;
+			var scale = 1;
+		
+			for (var i = 0; i < totalPoints; i++ ) 
+			{
+				vertices.push(0,0,0);
+				colors.push(0, 0, 0);
+			}
+
+			for (var i = 0 ; i < totalPoints/3; i++)	
+			{
+				vertices3.push(0,0,0);
+				colors3.push(0,0,0);
+			}
+
+			for (var i = 0; i < totalPoints2; i++ ) 
+			{
+				vertices2.push(0,0,0);
+				colors2.push(0, 0, 0);
+			}
+
+			var scene = new THREE.Scene();
+			var scene2 = new THREE.Scene();
+			scene.background = new THREE.Color(0xffffff);
+			scene2.background = new THREE.Color(0xffffff);
+			//scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
+			//var camera = new THREE.OrthographicCamera( window.innerWidth  / - 2, window.innerWidth  / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 2000);
+			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+			var camera2 = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+			camera.zoom = 1;
+			camera2.zoom = 1;
+			
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setSize( canvasThree.clientWidth - 20, canvasThree.clientHeight - 22);
+			renderer.setPixelRatio(1);
+			canvasThree.appendChild( renderer.domElement );
+
+			var renderer2 = new THREE.WebGLRenderer( { antialias: true } );
+			renderer2.setSize( canvasThree2.clientWidth - 20, canvasThree2.clientHeight - 22);
+			renderer2.setPixelRatio(1);
+			canvasThree2.appendChild( renderer2.domElement );
+
+
+			//var helper = new THREE.CameraHelper(camera);
+			//scene.add(helper);
+
+			var axesHelper = new THREE.AxesHelper(100);
+			scene.add(axesHelper);
+
+			var controls = new THREE.OrbitControls(camera, canvasThree);
+            controls.addEventListener('change', function () {
+                renderer.render(scene, camera);
+            });
+
+			var controls2 = new THREE.OrbitControls(camera2, canvasThree2);
+            controls2.addEventListener('change', function () {
+                renderer2.render(scene2, camera2);
+            });
+			
+			var geometry = new THREE.BufferGeometry();
+			geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+			geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+			geometry.setDrawRange(0,  totalPoints);
+
+			var geometry2 = new THREE.BufferGeometry();
+			geometry2.setAttribute('position', new THREE.Float32BufferAttribute(vertices2, 3));
+			geometry2.setAttribute('color', new THREE.Float32BufferAttribute(colors2, 3));
+			geometry2.setDrawRange(0,  totalPoints2);
+
+			var material = new THREE
+				.PointsMaterial({ 
+					size: 0.40,
+					vertexColors: THREE.VertexColors 
+				});
+
+			var material2 = new THREE
+				.PointsMaterial({ 
+					size: 0.40,
+					vertexColors: THREE.VertexColors 
+				});
+			
+			var points = new THREE.Points( geometry, material );
+			points.position.set(0, 0, 0);
+			scene.add(points);
+
+			var points2 = new THREE.Points( geometry2, material2 );
+			points2.position.set(0, 0, 0);
+			scene2.add(points2);
+
+			var cubeGeometry = new THREE.CubeGeometry(80,80,80);
+			var cubeMaterial = new THREE.MeshBasicMaterial( { color: 0xff4Fff, transparent: true, opacity : 0.6} );
+			var cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
+			cube.position.set(0,0,0);
+			scene.add(cube);
+			cube.visible = false;
+
+			/*Start of experiment*/
+			/*
+			var clipperGeometry = new THREE.BufferGeometry();
+			clipperGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices3, 3));
+			clipperGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors3, 3));
+			clipperGeometry.setDrawRange(0,  totalPoints);
+
+			var clipperMaterial = new THREE
+			.PointsMaterial({ 
+				size: 0.40,
+				vertexColors: THREE.VertexColors 
+			});
+			
+			var clipper = new THREE.Points( clipperGeometry, clipperMaterial);
+			clipper.position.set(0, 0, 0);
+			scene.add(clipper);
+			*/
+			/*END of experiment*/
+
+			var dragControls = new DragControls([cube],camera, renderer.domElement);
+			camera.position.z = 250;
+			camera.position.x = 0;
+			camera.position.y = 0;
+
+			camera2.position.z = 250;
+			camera2.position.x = 0;
+			camera2.position.y = 0;
+
+
+			var animate = function () 
+			{
+				requestAnimationFrame( animate );
+				controls.update();
+				renderer.render( scene, camera );
+			};
+
+			var animate2 = function () 
+			{
+				requestAnimationFrame( animate2 );
+				controls2.update();
+				renderer2.render( scene2, camera2 );
+			};
+
+			dragControls.addEventListener( 'dragstart', function ( event ) 
+			{
+				var selectedEvent = event.object;
+			});
+
+			dragControls.addEventListener( 'dragend', function ( event ) 
+			{
+				var selectedEvent = event.object;
+
+				// var xmin = (selectedEvent.position.x  - 25 * scale);
+				// var xmax = (selectedEvent.position.x  + 25 * scale);
+				// var ymin = (selectedEvent.position.y  - 25 * scale);
+				// var ymax = (selectedEvent.position.y  + 25 * scale);
+				var xmin = (selectedEvent.position.x  - 60 * scale);
+				var xmax = (selectedEvent.position.x  + 60 * scale);
+				var ymin = (selectedEvent.position.y  - 60 * scale);
+				var ymax = (selectedEvent.position.y  + 60 * scale);
+
+
+				xminSelected = xmin;
+				xmaxSelected = xmax;
+				yminSelected = ymin;
+				ymaxSelected = ymax;
+
+				/* Clipping Area Visualization*/
+				/*
+				// START TO COMMENT
+				var positions = points.geometry.attributes.position.array;
+				var positions3 = clipper.geometry.attributes.position.array;
+				var colors3 = clipper.geometry.attributes.color.array;
+				var colors = points.geometry.attributes.color.array;
+
+				for (i = 0; i < totalPoints; i++) 
+				{
+					var x = positions[i * 3];
+					var y = positions[i * 3 + 1];
+					var z = positions[i * 3 + 2];
+
+					if ((xmin <= x && x <= xmax) && (ymin <= y && y <= ymax))
+					{
+						colors3[i * 3 ] = colors[i * 3];
+						colors3[i * 3 + 1] = colors[i * 3 + 1];
+						colors3[i * 3 + 2] = colors[i * 3 + 2];
+						positions3[i * 3] = x;
+						positions3[i * 3 + 1] = y;
+						positions3[i * 3 + 2] = z + 100;
+					}
+					else
+					{
+						positions3[i * 3] = 0;
+						positions3[i * 3 + 1] = 0;
+						positions3[i * 3 + 2] = 0;
+						colors3[i * 3 ] = 0;
+						colors3[i * 3 + 1] = 0;
+						colors3[i * 3 + 2] = 0;
+					}
+				}
+
+				clipper.geometry.attributes.color.needsUpdate = true;
+				clipper.geometry.attributes.position.needsUpdate = true;
+				renderer.render( scene, camera );
+				*/
+				// END TO COMMENT
+			});
+
+			analyticsWorker.onmessage = function(e) 
+			{
+				document.getElementById("myBarChartLoader").style.visibility = 'hidden';
+				var classColor = e.data;
+				myBarChart.data.datasets[0].data = classColor;
+				myBarChart.update();
+			}
+
+			analyticsWorkerCLCPCS.onmessage = function(e) 
+			{
+				document.getElementById("myBarChartLoader").style.visibility = 'hidden';
+				var clcpcs = e.data;
+				myclcpchart.data.datasets[0].data = clcpcs;
+				myclcpchart.update();
+			}
+
+			realtimeLoaderClassify.onmessage = function(e) 
+			{
+				xmean = 511.72046;//xmean/totalPoints;
+				ymean = 502.7201;//ymean/totalPoints;
+				zmean = 41.61587;//zmean/totalPoints;
+
+				var buffer = e.data.buffer;
+				var offset = e.data.offset;
+
+				//var positions3 = clipper.geometry.attributes.position.array;
+				//var colors3 = clipper.geometry.attributes.color.array;
+
+				var positions3 = points2.geometry.attributes.position.array;
+				var colors3 = points2.geometry.attributes.color.array;
+
+				// for (i = 0; i < positions3.length; i++) 
+				// {
+				// 	positions3[i] = 0;
+				// 	colors3[i] = 0;
+				// }
+
+				for (i = 0; i < buffer.length; i++) 
+				{
+					var r, g, b;
+					if (buffer[i][3] == 2)
+					{
+						r = 0;
+						g = 255;
+						b = 0;
+					}
+					else if (buffer[i][3] == 1)
+					{
+						r = 0;
+						g = 0;
+						b = 255;
+					}
+					else if (buffer[i][3] == 8)
+					{
+						r = 255;
+						g = 0;
+						b = 0;
+					}
+					else
+					{
+						r = 0.5;
+						g = 0.5;
+						b = 0.5;
+					}
+
+					colors3[(i + offset)  * 3 ] = r;
+					colors3[(i + offset)  * 3 + 1] = g;
+					colors3[(i + offset)  * 3 + 2] = b;
+
+					positions3[(i + offset)  * 3] = buffer[i][0] - xmean;
+					positions3[(i + offset)  * 3 + 1] = buffer[i][1] - ymean;
+					positions3[(i + offset)  * 3 + 2] = (buffer[i][2] - zmean) + 80;
+					//positions3[(i)  * 3 + 2] = (buffer[i][2] - zmean);
+				}
+
+				//clipper.geometry.attributes.color.needsUpdate = true;
+				//clipper.geometry.attributes.position.needsUpdate = true;
+
+				points2.geometry.attributes.color.needsUpdate = true;
+				points2.geometry.attributes.position.needsUpdate = true;
+
+			    //renderer.render( scene, camera );
+
+				renderer2.render( scene2, camera2 );
+				document.getElementById("classifyLoader").style.visibility = 'hidden';
+			}
+
+			realtimeLoader.onmessage = function(e) 
+			{
+				xmean = 511.72046;//xmean/totalPoints;
+				ymean = 502.7201;//ymean/totalPoints;
+				zmean = 41.61587;//zmean/totalPoints;
+
+				var buffer = e.data.buffer;
+				var offset = e.data.offset;
+
+				var positions = points.geometry.attributes.position.array;
+				var colors = points.geometry.attributes.color.array;
+				
+				for (i = 0; i < buffer.length; i++) 
+				{
+					var r, g, b;
+					if (buffer[i][3] == 2)
+					{
+						r = 0; g =255; b = 0;
+					}
+					else if (buffer[i][3] == 1)
+					{
+						r = 0; g =0; b = 255;
+					}
+					else if (buffer[i][3] == 8)
+					{
+						r = 255; g = 0; b = 0;
+					}
+					else
+					{
+						r = 0.5; g = 0.5; b = 0.5;
+					}
+
+					colors[(i + offset)  * 3 ] = r;
+					colors[(i + offset)  * 3 + 1] = g;
+					colors[(i + offset)  * 3 + 2] = b;
+
+					positions[(i + offset)  * 3] = buffer[i][0] - xmean;
+					positions[(i + offset)  * 3 + 1] = buffer[i][1]- ymean;
+					positions[(i + offset)  * 3 + 2] = (buffer[i][2] - zmean);
+				}
+
+				points.geometry.attributes.color.needsUpdate = true;
+				points.geometry.attributes.position.needsUpdate = true;
+				renderer.render( scene, camera );
+				document.getElementById("canvasthreeLoader").style.visibility = 'hidden';
+			}
+		</script>
+		<script>
+			var slider = document.getElementById("cubeScale");
+			slider.oninput = function() 
+			{
+				cube.scale.set(this.value, this.value, this.value)
+				scale = this.value;	
+			}
+
+			function controlEnableDisbale()
+			{
+				var btn = document.getElementById("controlEnableDisbalebtn");
+
+				if (!controls.enabled)
+				{
+					cube.visible = false;
+					slider.visible = false;
+					slider.style.visibility = 'hidden';
+					btn.style.backgroundColor = "#fff";
+				}
+				else
+				{
+					cube.visible = true;
+					slider.style.visibility = 'visible';
+					btn.style.backgroundColor = "red";
+				}
+				controls.enabled = !controls.enabled;	
+			}
+
+			animate();
+			animate2();
+		</script>
+		<script>
+		function openNav() 
+		{
+			document.getElementById("mySidebar").style.visibility = 'visible';
+			document.getElementById("mySidebar").style.width = "250px";
+			document.getElementById("main").style.marginLeft = "0px";
+			document.getElementById("canvasthree").style.width =  (document.getElementById("canvasthree").width) + "px";
+			document.getElementById("canvasthree").childNodes[0].style.width = (document.getElementById("canvasthree").childNodes[0].width) + "px"
+			document.getElementById("canvasthreeheader").style.width =   (document.getElementById("canvasthree").childNodes[0].width) + "px"
+			document.getElementById("openbtn").style.visibility = 'hidden';
+		}		
+		function closeNav() 
+		{
+			document.getElementById("mySidebar").style.width = "0px";
+			document.getElementById("mySidebar").style.visibility = 'hidden';
+			document.getElementById("main").style.marginLeft= "-265px";
+			document.getElementById("canvasthree").style.width =  (document.getElementById("canvasthree").width + 400) + "px";
+			document.getElementById("canvasthree").childNodes[0].style.width = (document.getElementById("canvasthree").childNodes[0].width + 400) + "px";
+			document.getElementById("canvasthreeheader").style.width =  (document.getElementById("canvasthree").childNodes[0].width + 400) + "px";
+			document.getElementById("openbtn").style.visibility = 'visible';
+		}
+	    </script>
+	    <script>
+		function loadChart(inputData)
+		{
+			document.getElementById("myBarChartLoader").style.visibility = 'hidden';
+			var ctx = document.getElementById('myChart').getContext('2d');
+			myclcpchart = new Chart(ctx, {
+				// The type of chart we want to create
+				type: 'line',
+
+				// The data for our dataset
+				data: {
+					labels: ['CL', 'CS', 'CP'],
+					datasets: [{
+						label: 'CL CS CP Distribution',
+						backgroundColor: 'rgb(255, 99, 132)',
+						borderColor: 'rgb(255, 99, 132)',
+						data: inputData || [0,0,0]
+					}]
+				},
+
+				// Configuration options go here
+				options: {}
+			});
+		}
+
+		function loadBars(inputData)
+		{
+			var ctx2 = document.getElementById('myBarChart').getContext('2d');
+		
+			myBarChart = new Chart(ctx2, {
+				type: 'bar',
+
+				data: 
+				{
+					labels: [
+      "ground",
+      "vegetation",
+	  "cars",
+	  "trucks",
+	  "power pines",
+	  "fences",
+	  "poles",
+	  "buildings"
+    ],
+					datasets: [{
+						label : 'Class Distribution',
+						barPercentage: 0.5,
+						backgroundColor: ['rgb(160, 155, 0)','rgb(255, 99, 132)','rgb(255, 99, 132)','rgb(128, 255, 0)','rgb(0, 255, 255)','rgb(255, 255, 0)','rgb(255, 255, 128)', 'rgb(255, 0, 0)'],
+						barThickness: 0.5,
+						maxBarThickness: 1,
+						minBarLength: 1,
+						data: inputData || [0, 0, 0, 0, 0, 0, 0, 0]
+					}]
+				},
+				options: 
+				{
+					scales: 
+					{
+						xAxes: 
+						[{
+							gridLines: 
+							{
+								offsetGridLines: true
+							}
+						}],
+						yAxes: 
+						[{
+							ticks: {
+                				beginAtZero:true
+            				}
+						}]
+					},
+					legend: {
+						display: true,
+						labels: 
+						{
+							fontColor: 'rgb(0, 0, 255)'
+						}
+        			}
+				} 
+				});
+		}
+
+		function classifyClick ()
+		{
+			if (xmaxSelected !== 0 && ymaxSelected !== 0)
+			{
+				document.getElementById("classifyLoader").style.visibility = 'visible';
+
+				var positions3 = points2.geometry.attributes.position.array;
+				var colors3 = points2.geometry.attributes.color.array;
+
+				for (i = 0; i < positions3.length; i++) 
+				{
+					positions3[i] = 0;
+					colors3[i] = 0;
+				}
+
+				var selectBuffer = [];
+				var positions = points.geometry.attributes.position.array;
+				for (j = 0; j < positions.length; j= j + 3) {
+					if( (positions[j] >= xminSelected && positions[j] <= xmaxSelected ) && 
+						(positions[j + 1] >= yminSelected && positions[j + 1] <= ymaxSelected )) {
+							selectBuffer.push([positions[j], positions[j + 1], positions[j + 2]]);
+					}
+				}
+
+				for (i = 0; i < selectBuffer.length; i++) 
+				{
+					positions3[i * 3] = selectBuffer[i][0];
+					positions3[(i * 3)+ 1] = selectBuffer[i][1];
+					positions3[(i * 3) + 2] = selectBuffer[i][2] + 80;
+
+					colors3[(i * 3)] = 0;
+					colors3[(i * 3) + 1] = 0;
+					colors3[(i * 3) + 2] = 0;
+				}
+
+				points2.geometry.attributes.color.needsUpdate = true;
+				points2.geometry.attributes.position.needsUpdate = true;
+				renderer2.render( scene2, camera2 );
+
+				realtimeLoaderClassify.postMessage
+				([
+						xminSelected, xmaxSelected,
+						yminSelected, ymaxSelected,
+						xmean, ymean, zmean
+				]);
+			}
+		}
+
+		function loadSampledData()
+		{
+			document.getElementById("canvasthreeLoader").style.visibility = 'visible';
+			
+			realtimeLoader.postMessage({});
+		}
+
+		function fnClassHistoCheck()
+		{
+			if (classHistoCheck.checked)
+			{
+				vizClassHistoCheck.style.visibility = 'visible';
+				myBarChart.visible = true;
+			}
+			else
+			{
+				vizClassHistoCheck.style.visibility = 'hidden';
+				myBarChart.visible = false;
+			}
+		}
+
+		function fnClcscpDistCheck()
+		{
+			if (clcscpDistCheck.checked)
+				vizClcscpDistCheck.style.visibility = 'visible';
+			else
+				vizClcscpDistCheck.style.visibility = 'hidden';
+		}
+
+		function performAnalytics()
+		{
+			if (xmaxSelected !== 0 && ymaxSelected !== 0)
+			{
+				if(!classHistoCheck.checked && !clcscpDistCheck.checked)
+				{
+					document.getElementById("myBarChartLoader").style.visibility = 'hidden';
+				}
+				else
+				{
+					document.getElementById("myBarChartLoader").style.visibility = 'visible';
+				}
+				
+				if (classHistoCheck.checked)
+				{
+					analyticsWorker.postMessage
+					([
+						xminSelected, xmaxSelected,
+						yminSelected, ymaxSelected,
+						xmean, ymean, zmean
+					]);
+				}
+
+				if (clcscpDistCheck.checked)
+				{
+					analyticsWorkerCLCPCS.postMessage
+					([
+						xminSelected, xmaxSelected,
+						yminSelected, ymaxSelected,
+						xmean, ymean, zmean
+					]);
+				}
+			}
+		}
+
+		loadChart();
+		loadBars();
+		fnClassHistoCheck();
+		fnClcscpDistCheck();
+	    </script>
+		<!--script section ends-->	
+	</body>
+</html>
